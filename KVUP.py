@@ -103,11 +103,13 @@ class wc3pars:
 
         self.projectilemodel = None
         self.projectilespeed = None
-        if 'Missilespeed' in section:
-            if section['Missilespeed'] is not '':
-                self.projectilemodel = ''
-                self.projectilespeed = section['Missilespeed']
-                self.attackcapabilities = 'DOTA_UNIT_CAP_RANGED_ATTACK'
+        if self.attackrange.find('-') == -1:
+            if float(self.attackrange) > 128:
+                if 'Missilespeed' in section:
+                    if section['Missilespeed'] is not '':
+                        self.projectilemodel = ''
+                        self.projectilespeed = section['Missilespeed']
+                        self.attackcapabilities = 'DOTA_UNIT_CAP_RANGED_ATTACK'
         
         self.combatclassattack = 'DOTA_COMBAT_CLASS_ATTACK_BASIC'
         if 'atkType1' in section:
