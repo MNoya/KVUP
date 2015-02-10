@@ -279,7 +279,7 @@ class wc3pars:
         lines.append(self.kvcomment(' Gold and Lumber'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('GoldCost', self.goldcost, None))
-        lines.append(self.kvline('LumberCost', self.goldcost, None))
+        lines.append(self.kvline('LumberCost', self.lumbercost, None))
         lines.append(self.kvcomment(None))
 
         lines.append(self.kvcomment(' Movement'))
