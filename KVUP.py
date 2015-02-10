@@ -203,12 +203,16 @@ class wc3pars:
         lines.append(self.kline(self.npc_name.replace(' ', '_')))
         lines.append(self.kvcomment(' General'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
-        lines.append(self.kvline('BaseClass', self.baseclass,None))
-        lines.append(self.kvline('Model', '', 'Add model'))
-        lines.append(self.kvline('ModelScale', '1', None))
-        lines.append(self.kvline('Level', self.level, None))
-        lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
-        lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))
+        if self.attributeprimary is not None:
+            self.baseclass = ''
+            lines.append(self.kvline('override_hero', self.baseclass, "Add npc_dota_hero internal name"))
+        else:
+            lines.append(self.kvline('BaseClass', self.baseclass,None))
+            lines.append(self.kvline('Model', '', 'Add model'))
+            lines.append(self.kvline('ModelScale', '1', None))
+            lines.append(self.kvline('Level', self.level, None))
+            lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
+            lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))
 
         lines.append(self.kvcomment(None))
         
