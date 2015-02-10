@@ -13,8 +13,8 @@ armortypes['medium'] = 'DOTA_COMBAT_CLASS_DEFEND_BASIC'
 armortypes['large'] = 'DOTA_COMBAT_CLASS_DEFEND_STRONG'
 armortypes['fort'] = 'DOTA_COMBAT_CLASS_DEFEND_STRUCTURE'
 armortypes['hero'] = 'DOTA_COMBAT_CLASS_DEFEND_HERO'
-armortypes['none'] = 'DOTA_COMBAT_CLASS_DEFEND_SOFT' ##NONE
-armortypes['divine'] = 'DOTA_COMBAT_CLASS_DEFEND_HERO' ##DIVINE
+armortypes['none'] = 'NONE' # Ignored
+armortypes['divine'] = 'DIVINE' # Needs custom mechanic
 
 
 #Attack Types: - "CombatClassAttack"
@@ -25,8 +25,8 @@ attacktypes['pierce'] = 'DOTA_COMBAT_CLASS_ATTACK_PIERCE'
 attacktypes['siege'] = 'DOTA_COMBAT_CLASS_ATTACK_SIEGE'
 attacktypes['chaos'] = 'DOTA_COMBAT_CLASS_ATTACK_LIGHT'
 attacktypes['hero'] = 'DOTA_COMBAT_CLASS_ATTACK_HERO'
-attacktypes['magic'] = 'DOTA_COMBAT_CLASS_ATTACK_HERO' ##MAGIC
-attacktypes['spells'] = 'DOTA_COMBAT_CLASS_ATTACK_HERO' ##ONLYSPELLS
+attacktypes['magic'] = 'MAGIC' # Needs custom mechanic
+attacktypes['spells'] = 'SPELLS' # Needs custom mechanic
 
 #Movement Types: - ""
 #--------------
@@ -309,11 +309,20 @@ class wc3pars:
         lines.append(self.kvcomment(' Team'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('TeamName', self.team, None))
-        lines.append(self.kvline('CombatClassAttack', self.combatclassattack, None))
-        lines.append(self.kvline('CombatClassDefened', self.combatclassdefend, None))
-        lines.append(self.kvline('UnitRelationShipClass', self.unitrelationshipclass, None))
-        lines.append(self.kvcomment(None))
 
+        if self.combatclassattack is 'MAGIC':
+            self.combatclassattack = 'DOTA_COMBAT_CLASS_ATTACK_HERO'
+            lines.append(self.kvline('CombatClassAttack', self.combatclassattack, "MAGIC - Attacks deal magic damage, ignores physical armor"))
+        if self.combatclassattack is 'SPELLS':
+            self.combatclassattack = 'DOTA_COMBAT_CLASS_ATTACK_HERO'
+            lines.append(self.kvline('CombatClassAttack', self.combatclassattack, "SPELLS - Attacks only through spells"))   
+        
+        if self.combatclassdefend is 'DIVINE':
+            self.combatclassdefend = 'DOTA_COMBAT_CLASS_DEFEND_HERO'
+            lines.append(self.kvline('CombatClassDefend', self.combatclassdefend, "DIVINE - Takes only 1/10 dmg from all types of atacks."))
+        elif self.combatclassdefend is not 'NONE':
+            lines.append(self.kvline('UnitRelationShipClass', self.unitrelationshipclass, None))
+        lines.append(self.kvcomment(None))
         
         lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
         lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))

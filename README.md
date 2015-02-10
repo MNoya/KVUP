@@ -1,8 +1,8 @@
-# Warcraft 3 -> Dota 2 KV-Unit Parser
+Warcraft 3 -> Dota 2 KV-Unit Parser.
 
 KVUP takes a file containing Warcraft III unit data and converts it to Dota 2 custom unit KeyValues.
 
-## Usage
+### Usage
 
 Step 1. Create a units.txt file by running the included [RMPQEx](http://www.rivsoft.net/projects/other/rmpqex/) over any Warcraft 3 map, using the Dump object data to [select the Unit data]. A default units file is included.
 
