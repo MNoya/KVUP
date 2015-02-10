@@ -293,17 +293,18 @@ class wc3pars:
         lines.append(self.kvcomment(' Status'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('StatusHealth', self.statushealth, None))
-        if not self.statushealth.find('-') != -1:
-            lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, None))
-        else:
-            lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, "Negative regen doesnt decrease HP ingame"))
+        lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, None))
 
 		# Careful with negative mana regen 
         if not self.statusmana.find('-') != -1:
-        	lines.append(self.kvline('StatusMana', self.statusmana, None))
+            lines.append(self.kvline('StatusMana', self.statusmana, None))
+        else:
+           lines.append(self.kvline('StatusMana', '0', None)) 
 
         if not self.statusmanaregen.find('-') != -1:
-        	lines.append(self.kvline('StatsManaRegen', self.statusmanaregen, None))
+            lines.append(self.kvline('StatusManaRegen', self.statusmana, None))
+        else:
+           lines.append(self.kvline('StatusManaRegen', '0', None))
 
         lines.append(self.kvcomment(None))
 
