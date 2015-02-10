@@ -207,6 +207,9 @@ class wc3pars:
         lines.append(self.kvline('Model', '', 'Add model'))
         lines.append(self.kvline('ModelScale', '1', None))
         lines.append(self.kvline('Level', self.level, None))
+        lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
+        lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))
+
         lines.append(self.kvcomment(None))
         
         lines.append(self.kvcomment(' Abilities'))
@@ -285,11 +288,11 @@ class wc3pars:
 
         lines.append(self.kvcomment(' Status'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
+        lines.append(self.kvline('StatusHealth', self.statushealth, None))
         if not self.statushealth.find('-') != -1:
-        	lines.append(self.kvline('StatusHealth', self.statushealth, "Negative regen doesnt decrease HP ingame"))
+            lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, None))
         else:
-        	lines.append(self.kvline('StatusHealth', self.statushealth, None))
-        lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, None))
+            lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, "Negative regen doesnt decrease HP ingame"))
 
 		# Careful with negative mana regen 
         if not self.statusmana.find('-') != -1:
@@ -313,21 +316,20 @@ class wc3pars:
         if self.combatclassattack is 'MAGIC':
             self.combatclassattack = 'DOTA_COMBAT_CLASS_ATTACK_HERO'
             lines.append(self.kvline('CombatClassAttack', self.combatclassattack, "MAGIC - Attacks deal magic damage, ignores physical armor"))
-        if self.combatclassattack is 'SPELLS':
+        elif self.combatclassattack is 'SPELLS':
             self.combatclassattack = 'DOTA_COMBAT_CLASS_ATTACK_HERO'
-            lines.append(self.kvline('CombatClassAttack', self.combatclassattack, "SPELLS - Attacks only through spells"))   
+            lines.append(self.kvline('CombatClassAttack', self.combatclassattack, "SPELLS - Attacks only through spells"))
+        else:
+            lines.append(self.kvline('CombatClassAttack', self.combatclassattack, None))
         
         if self.combatclassdefend is 'DIVINE':
             self.combatclassdefend = 'DOTA_COMBAT_CLASS_DEFEND_HERO'
             lines.append(self.kvline('CombatClassDefend', self.combatclassdefend, "DIVINE - Takes only 1/10 dmg from all types of atacks."))
         elif self.combatclassdefend is not 'NONE':
-            lines.append(self.kvline('UnitRelationShipClass', self.unitrelationshipclass, None))
+            lines.append(self.kvline('CombatClassDefend', self.combatclassdefend, None))
+        lines.append(self.kvline('UnitRelationShipClass', self.unitrelationshipclass, None))
         lines.append(self.kvcomment(None))
-        
-        lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
-        lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))
-        lines.append(self.kvcomment(None))
-
+    
         lines.append(self.kvcomment(' Creature Data'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(endline)
