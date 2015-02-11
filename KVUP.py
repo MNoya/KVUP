@@ -94,13 +94,17 @@ class wc3pars:
         self.armormagic = 0
 
         self.attackcapabilities = 'DOTA_UNIT_CAP_MELEE_ATTACK'
-        self.attackdamagemin = None
-        self.attackdamagemax = None
+        if 'weapsOn' in section:
+            if section['weapsOn'] is '0':
+                self.attackcapabilities = 'DOTA_UNIT_CAP_NO_ATTACK'
+
+        self.attackdamagemin = '0'
+        self.attackdamagemax = '0'
         if (('dice1' and 'sides1') in section):
             if section['dice1'] is not '-' and section['sides1'] is not '-':
                 self.attackdamagemin = str(float(section['dice1']) + float(section['dmgplus1']))
                 self.attackdamagemax = str(float(section['dice1']) * float(section['sides1']) + float(section['dmgplus1']))
-        self.attackdamagetype = 'DAMAGE_TYPE_PHYSICAL'
+        self.attackdamagetype = 'DAMAGE_TYPE_ArmorPhysical'
         self.attackrate = None
         if 'cool1' in section:
             self.attackrate = section['cool1']
@@ -196,7 +200,7 @@ class wc3pars:
             self.visionnighttimerange = section['nsight']
 
         self.movementcapabilities = 'DOTA_UNIT_CAP_MOVE_NONE'
-        self.movementspeed = '100'
+        self.movementspeed = '0'
         if 'spd' in section:
             self.movementspeed = section['spd']
             if 'movetp' in section:
@@ -274,9 +278,9 @@ class wc3pars:
         lines.append(self.kvcomment(' Attack'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('AttackCapabilities',self.attackcapabilities, None))
+        lines.append(self.kvline('AttackDamageType', self.attackdamagetype, None))
         lines.append(self.kvline('AttackDamageMin', self.attackdamagemin, None))
         lines.append(self.kvline('AttackDamageMax', self.attackdamagemax, None))
-        lines.append(self.kvline('AttackDamageType', self.attackdamagetype, None))
 
         if not self.attackrate.find('-') != -1:
         	lines.append(self.kvline('AttackRate', self.attackrate, None))
@@ -345,6 +349,8 @@ class wc3pars:
         lines.append(self.kvline('CollisionSize', self.collision, None))
         lines.append(self.kvline('FormationRank', self.formation, None))
 
+        lines.append(self.kvcomment(None))
+
         lines.append(self.kvcomment(' Building Cost Stats'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('GoldCost', self.goldcost, None))
@@ -358,8 +364,11 @@ class wc3pars:
         lines.append(self.kvcomment(' Movement'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('MovementCapabilities', self.movementcapabilities, None))
-        if self.movementspeed is not '-' and self.movementturnrate is not '-':
+        if self.movementspeed is not '-':
 	        lines.append(self.kvline('MovementSpeed', self.movementspeed, None))
+        else:
+            lines.append(self.kvline('MovementSpeed', '0', None))
+        if self.movementturnrate is not '-':
 	        lines.append(self.kvline('MovementTurnRate', self.movementturnrate, None))
         lines.append(self.kvcomment(None))
 
