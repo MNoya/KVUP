@@ -248,29 +248,7 @@ class wc3pars:
             lines.append(self.kvline('Model', '', 'Add model'))
             lines.append(self.kvline('ModelScale', '1', None))
             lines.append(self.kvline('Level', self.level, None))
-
-            # Attempt to write the best hull name possible
-            if float(self.collision) <= 8: 
-                self.boundshullname = 'DOTA_HULL_SIZE_SMALL'
-            elif float(self.collision) <= 16:
-                self.boundshullname = 'DOTA_HULL_SIZE_REGULAR'
-            elif float(self.collision) <= 24:
-                self.boundshullname = 'DOTA_HULL_SIZE_HERO'
-            # Cut the 24-81 interval in half
-            elif float(self.collision) <= 54:
-                self.boundshullname = 'DOTA_HULL_SIZE_HERO'
-            elif float(self.collision) <= 81:
-                self.boundshullname = 'DOTA_HULL_SIZE_BUILDING'
-            # Cut the 96-144 interval in half
-            elif float(self.collision) <= 120:
-                self.boundshullname = 'DOTA_HULL_SIZE_FILLER'
-            else:
-                self.boundshullname = 'DOTA_HULL_SIZE_BARRACKS'
-
-            lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
             lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))
-            lines.append(self.kvline('CollisionSize', self.collision, None))
-            lines.append(self.kvline('FormationRank', self.formation, None))
 
         lines.append(self.kvcomment(None))
         
@@ -333,6 +311,39 @@ class wc3pars:
         lines.append(self.kvline('BountyGoldMin', self.bountygoldmin, None))
         lines.append(self.kvline('BountyGoldMax', self.bountygoldmax, None))
         lines.append(self.kvcomment(None))
+
+        lines.append(self.kvcomment(' Bounds'))
+        lines.append(self.kvcomment('----------------------------------------------------------------'))
+        
+        # Attempt to write the best hull and radius possible
+        if float(self.collision) <= 8: 
+            self.boundshullname = 'DOTA_HULL_SIZE_SMALL'
+            self.ringradius = 40
+        elif float(self.collision) <= 16:
+            self.boundshullname = 'DOTA_HULL_SIZE_REGULAR'
+            self.ringradius = 70
+        elif float(self.collision) <= 24:
+            self.boundshullname = 'DOTA_HULL_SIZE_HERO'
+            self.ringradius = 100
+        # Cut the 24-81 interval in half
+        elif float(self.collision) <= 54:
+            self.boundshullname = 'DOTA_HULL_SIZE_HERO'
+            self.ringradius = 130
+        elif float(self.collision) <= 81:
+            self.boundshullname = 'DOTA_HULL_SIZE_BUILDING'
+            self.ringradius = 160
+        # Cut the 96-144 interval in half
+        elif float(self.collision) <= 120:
+            self.boundshullname = 'DOTA_HULL_SIZE_FILLER'
+            self.ringradius = 190
+        else:
+            self.boundshullname = 'DOTA_HULL_SIZE_BARRACKS'
+            self.ringradius = 220
+
+        lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
+        lines.append(self.kvline('RingRadius', self.ringradius, None))
+        lines.append(self.kvline('CollisionSize', self.collision, None))
+        lines.append(self.kvline('FormationRank', self.formation, None))
 
         lines.append(self.kvcomment(' Building Cost Stats'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
