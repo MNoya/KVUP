@@ -2,7 +2,7 @@
 
 
 ##NOTE: Files must have an empty line at the end
-endline = '\t}\n\n'
+endline = '}\n\n'
 
 #Armor Types: - "CombatClassDefend"
 #------------
@@ -46,6 +46,16 @@ attributeprimary['STR'] = 'DOTA_ATTRIBUTE_STRENGTH'
 attributeprimary['INT'] = 'DOTA_ATTRIBUTE_INTELLECT'
 attributeprimary['AGI'] = 'DOTA_ATTRIBUTE_AGILITY'
 
+#Collision Hull
+boundshullnames = {}
+boundshullnames['144'] = 'DOTA_HULL_SIZE_BARRACKS'
+boundshullnames['96'] = 'DOTA_HULL_SIZE_FILLER'
+boundshullnames['81'] = 'DOTA_HULL_SIZE_BUILDING'
+boundshullnames['80'] = 'DOTA_HULL_SIZE_HUGE'
+boundshullnames['24'] = 'DOTA_HULL_SIZE_HERO'
+boundshullnames['16'] = 'DOTA_HULL_SIZE_REGULAR'
+boundshullnames['8'] = 'DOTA_HULL_SIZE_SMALL'
+
 class wc3pars:
     def __init__(self, section):
         self.npc_name = ''
@@ -54,6 +64,9 @@ class wc3pars:
         
         # BaseClass
         self.baseclass = 'npc_dota_creature'
+        if 'isbldg' in section:
+            if section['isbldg'] is '1':
+                self.baseclass = 'npc_dota_building'
         self.level = 0
         if 'level' in section:
             if section['level'] is not '-':
@@ -131,7 +144,7 @@ class wc3pars:
                 self.attributebaseagility = section['AGI']
                 self.attributeagilitygain = section['AGIplus']
 
-        # Add Custom Gold and Lumber Cost
+        # Add Gold, Lumber and Food Cost
         self.goldcost = 0
         if 'goldcost' in section:
             self.goldcost = section['goldcost']
@@ -139,6 +152,20 @@ class wc3pars:
         self.lumbercost = 0
         if 'lumbercost' in section:
             self.lumbercost = section['lumbercost']
+
+        self.foodcost = 0
+        if 'foodcost' in section:
+            self.foodcost = section['foodcost']
+
+        # Add Formation Rank, for custom pathing on units
+        self.formation = None
+        if 'formation' in section and self.baseclass is not 'npc_dota_building':
+            self.formation = section['formation']
+
+        # Add Build Time
+        self.buildtime = None
+        if 'bldtm' in section:
+            self.buildtime = section['bldtm']
 
         self.bountygoldmin = None
         self.bountygoldmax = None
@@ -178,12 +205,20 @@ class wc3pars:
         if 'turnRate' in section:
             self.movementturnrate = section['turnRate']
 
-        # Defaults, no wc3 equivalent
+        # Defaults
         self.boundshullname = 'DOTA_HULL_SIZE_HERO'
         self.healthbaroffset = 140
 
+        # Proper collision, to SetHullRadius and adjust bounds later
+        self.collision = None
+        if 'collision' in section:
+            self.collision = section['collision']
+
         self.team = 'DOTA_TEAM_NEUTRALS'
-        self.unitrelationshipclass = 'DOTA_NPC_UNIT_RELATIONSHIP_TYPE_DEFAULT'
+        if self.baseclass is 'npc_dota_building':
+            self.unitrelationshipclass = 'DOTA_NPC_UNIT_RELATIONSHIP_TYPE_BUILDING'
+        else:
+            self.unitrelationshipclass = 'DOTA_NPC_UNIT_RELATIONSHIP_TYPE_DEFAULT'      
 
         self.comments = ''
         
@@ -213,8 +248,29 @@ class wc3pars:
             lines.append(self.kvline('Model', '', 'Add model'))
             lines.append(self.kvline('ModelScale', '1', None))
             lines.append(self.kvline('Level', self.level, None))
+
+            # Attempt to write the best hull name possible
+            if float(self.collision) <= 8: 
+                self.boundshullname = 'DOTA_HULL_SIZE_SMALL'
+            elif float(self.collision) <= 16:
+                self.boundshullname = 'DOTA_HULL_SIZE_REGULAR'
+            elif float(self.collision) <= 24:
+                self.boundshullname = 'DOTA_HULL_SIZE_HERO'
+            # Cut the 24-81 interval in half
+            elif float(self.collision) <= 54:
+                self.boundshullname = 'DOTA_HULL_SIZE_HERO'
+            elif float(self.collision) <= 81:
+                self.boundshullname = 'DOTA_HULL_SIZE_BUILDING'
+            # Cut the 96-144 interval in half
+            elif float(self.collision) <= 120:
+                self.boundshullname = 'DOTA_HULL_SIZE_FILLER'
+            else:
+                self.boundshullname = 'DOTA_HULL_SIZE_BARRACKS'
+
             lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
             lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))
+            lines.append(self.kvline('CollisionSize', self.collision, None))
+            lines.append(self.kvline('FormationRank', self.formation, None))
 
         lines.append(self.kvcomment(None))
         
@@ -278,10 +334,14 @@ class wc3pars:
         lines.append(self.kvline('BountyGoldMax', self.bountygoldmax, None))
         lines.append(self.kvcomment(None))
 
-        lines.append(self.kvcomment(' Gold and Lumber'))
+        lines.append(self.kvcomment(' Building Cost Stats'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('GoldCost', self.goldcost, None))
         lines.append(self.kvline('LumberCost', self.lumbercost, None))
+        if self.baseclass is not 'npc_dota_building':
+            lines.append(self.kvline('FoodCost', self.foodcost, None))
+        lines.append(self.kvline('BuildTime', self.buildtime, None))
+
         lines.append(self.kvcomment(None))
 
         lines.append(self.kvcomment(' Movement'))
@@ -337,14 +397,44 @@ class wc3pars:
         lines.append(self.kvline('UnitRelationShipClass', self.unitrelationshipclass, None))
         lines.append(self.kvcomment(None))
     
-        lines.append(self.kvcomment(' Creature Data'))
-        lines.append(self.kvcomment('----------------------------------------------------------------'))
+        if self.baseclass is 'npc_dota_creature' and self.attributeprimary is None:
+            lines.append(self.kvcomment(' Creature Data'))
+            lines.append(self.kvcomment('----------------------------------------------------------------'))
+            lines.append(self.kvblock('Creature'))
+            lines.append(self.kvline2('DisableClumpingBehavior', '1', None))
+            lines.append('\n\t}\n')
         lines.append(endline)
         for line in lines:
             section += line
         newfile.write(section)
 
     def kvline(self, key, val, comment):
+        line = ''
+        if val is not None:
+            key = str(key)
+            val = str(val)
+            line = '\t"' + key + '"\t'
+            # At least 1 tab, desired is align to the equivalent of 5 tabs
+            # Need to account for the extra 2 "" characters
+            if len(key) < 2:
+                line += '\t'
+            if len(key) < 6:
+                line += '\t'
+            if len(key) < 10:
+                line += '\t'
+            if len(key) < 14:
+                line += '\t'
+            if len(key) < 18:
+                line += '\t'
+            if len(key) < 22:
+                line += '\t'
+            line += '"' + val +'"'
+            if comment is not None:
+                line += '\t //' + comment
+            line += '\n'
+        return line
+
+    def kvline2(self, key, val, comment):
         line = ''
         if val is not None:
             key = str(key)
@@ -367,26 +457,31 @@ class wc3pars:
             line += '"' + val +'"'
             if comment is not None:
                 line += '\t //' + comment
-            line += '\n'
+            #line += '\n'
         return line
 
     def kvcomment(self, comment):
-        line =  '\t\t'
+        line =  '\t'
         if comment is not None:
             line += '//' + comment
         line += '\n'
         return line
 
     def unitcomment(self, comment):
-        line = '\t//=================================================================================\n'
-        line += '\t// Creature: ' + comment +'\n'
+        line = '//=================================================================================\n'
+        line += '// Creature: ' + comment +'\n'
         if self.description is not None:
-            line += '\t// Description: ' + self.description + '\n'
-        line += '\t//=================================================================================\n'
+            line += '// Description: ' + self.description + '\n'
+        line += '//=================================================================================\n'
         return line
 
     def kline(self, unit_name):
-        line = '\t"'+ unit_name +'"\n' + '\t{\n'
+        line = '"'+ unit_name +'"\n' + '{\n'
+        return line
+
+    # 2nd level
+    def kvblock(self, block_name):
+        line = '\t"'+ block_name +'"\n' + '\t{\n'
         return line
         
 
