@@ -61,6 +61,9 @@ class wc3pars:
         self.npc_name = ''
         if 'Name' in section:
             self.npc_name = section['Name']
+
+        if 'race' in section:
+            self.npc_race = section['race']
         
         # BaseClass
         self.baseclass = 'npc_dota_creature'
@@ -158,8 +161,9 @@ class wc3pars:
             self.lumbercost = section['lumbercost']
 
         self.foodcost = 0
-        if 'foodcost' in section:
-            self.foodcost = section['foodcost']
+        if 'fused' in section:
+            if section['fused'] is not '-':
+                self.foodcost = section['fused']
 
         # Add Formation Rank, for custom pathing on units
         self.formation = None
@@ -241,7 +245,7 @@ class wc3pars:
         section = ''
         lines.append('\n')
         lines.append(self.unitcomment(self.npc_name))
-        lines.append(self.kline(self.npc_name.replace(' ', '_')))
+        lines.append(self.kline(self.npc_race+'_'+self.npc_name.replace(' ', '_').lower()))
         lines.append(self.kvcomment(' General'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         if self.attributeprimary is not None:
@@ -258,7 +262,8 @@ class wc3pars:
         
         lines.append(self.kvcomment(' Abilities'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
-
+        if self.abilitycounter <= 4:
+            lines.append(self.kvline('AbilityLayout', '4',None))
         if self.abilitylist is not None:
             for abil in self.abilitylist:
                 lines.append(self.kvline('Ability' + str(self.abilitycounter), '', 'Reference: ' + abil))
@@ -325,17 +330,17 @@ class wc3pars:
             self.ringradius = 40
         elif float(self.collision) <= 16:
             self.boundshullname = 'DOTA_HULL_SIZE_REGULAR'
-            self.ringradius = 70
+            self.ringradius = 50
         elif float(self.collision) <= 24:
             self.boundshullname = 'DOTA_HULL_SIZE_HERO'
-            self.ringradius = 100
+            self.ringradius = 60
         # Cut the 24-81 interval in half
         elif float(self.collision) <= 54:
             self.boundshullname = 'DOTA_HULL_SIZE_HERO'
-            self.ringradius = 130
+            self.ringradius = 70
         elif float(self.collision) <= 81:
             self.boundshullname = 'DOTA_HULL_SIZE_BUILDING'
-            self.ringradius = 160
+            self.ringradius = 140
         # Cut the 96-144 interval in half
         elif float(self.collision) <= 120:
             self.boundshullname = 'DOTA_HULL_SIZE_FILLER'
