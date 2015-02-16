@@ -494,7 +494,13 @@ class wc3pars:
 
     def unitcomment(self, comment):
         line = '//=================================================================================\n'
-        line += '// Creature: ' + comment +'\n'
+        if self.attributeprimary is not None:
+            line += '// Hero: ' + comment +'\n'
+        elif self.baseclass is 'npc_dota_creature':
+            line += '// Creature: ' + comment +'\n'
+        elif self.baseclass is 'npc_dota_building':
+            line += '// Building: ' + comment +'\n'
+            
         if self.description is not None:
             line += '// Description: ' + self.description + '\n'
         line += '//=================================================================================\n'
