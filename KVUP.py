@@ -2,7 +2,7 @@
 
 
 ##NOTE: Files must have an empty line at the end
-endline = '}\n\n'
+endline = '\t}\n\n'
 
 #Armor Types: - "CombatClassDefend"
 #------------
@@ -46,30 +46,14 @@ attributeprimary['STR'] = 'DOTA_ATTRIBUTE_STRENGTH'
 attributeprimary['INT'] = 'DOTA_ATTRIBUTE_INTELLECT'
 attributeprimary['AGI'] = 'DOTA_ATTRIBUTE_AGILITY'
 
-#Collision Hull
-boundshullnames = {}
-boundshullnames['144'] = 'DOTA_HULL_SIZE_BARRACKS'
-boundshullnames['96'] = 'DOTA_HULL_SIZE_FILLER'
-boundshullnames['81'] = 'DOTA_HULL_SIZE_BUILDING'
-boundshullnames['80'] = 'DOTA_HULL_SIZE_HUGE'
-boundshullnames['24'] = 'DOTA_HULL_SIZE_HERO'
-boundshullnames['16'] = 'DOTA_HULL_SIZE_REGULAR'
-boundshullnames['8'] = 'DOTA_HULL_SIZE_SMALL'
-
 class wc3pars:
     def __init__(self, section):
         self.npc_name = ''
         if 'Name' in section:
             self.npc_name = section['Name']
-
-        if 'race' in section:
-            self.npc_race = section['race']
         
         # BaseClass
         self.baseclass = 'npc_dota_creature'
-        if 'isbldg' in section:
-            if section['isbldg'] is '1':
-                self.baseclass = 'npc_dota_building'
         self.level = 0
         if 'level' in section:
             if section['level'] is not '-':
@@ -97,17 +81,13 @@ class wc3pars:
         self.armormagic = 0
 
         self.attackcapabilities = 'DOTA_UNIT_CAP_MELEE_ATTACK'
-        if 'weapsOn' in section:
-            if section['weapsOn'] is '0':
-                self.attackcapabilities = 'DOTA_UNIT_CAP_NO_ATTACK'
-
-        self.attackdamagemin = '0'
-        self.attackdamagemax = '0'
+        self.attackdamagemin = None
+        self.attackdamagemax = None
         if (('dice1' and 'sides1') in section):
             if section['dice1'] is not '-' and section['sides1'] is not '-':
                 self.attackdamagemin = str(float(section['dice1']) + float(section['dmgplus1']))
                 self.attackdamagemax = str(float(section['dice1']) * float(section['sides1']) + float(section['dmgplus1']))
-        self.attackdamagetype = 'DAMAGE_TYPE_ArmorPhysical'
+        self.attackdamagetype = 'DAMAGE_TYPE_PHYSICAL'
         self.attackrate = None
         if 'cool1' in section:
             self.attackrate = section['cool1']
@@ -123,13 +103,11 @@ class wc3pars:
 
         self.projectilemodel = None
         self.projectilespeed = None
-        if self.attackrange.find('-') == -1:
-            if float(self.attackrange) > 128:
-                if 'Missilespeed' in section:
-                    if section['Missilespeed'] is not '':
-                        self.projectilemodel = ''
-                        self.projectilespeed = section['Missilespeed']
-                        self.attackcapabilities = 'DOTA_UNIT_CAP_RANGED_ATTACK'
+        if 'Missilespeed' in section:
+            if section['Missilespeed'] is not '':
+                self.projectilemodel = ''
+                self.projectilespeed = section['Missilespeed']
+                self.attackcapabilities = 'DOTA_UNIT_CAP_RANGED_ATTACK'
         
         self.combatclassattack = 'DOTA_COMBAT_CLASS_ATTACK_BASIC'
         if 'atkType1' in section:
@@ -151,7 +129,7 @@ class wc3pars:
                 self.attributebaseagility = section['AGI']
                 self.attributeagilitygain = section['AGIplus']
 
-        # Add Gold, Lumber and Food Cost
+        # Add Custom Gold and Lumber Cost
         self.goldcost = 0
         if 'goldcost' in section:
             self.goldcost = section['goldcost']
@@ -164,16 +142,6 @@ class wc3pars:
         if 'fused' in section:
             if section['fused'] is not '-':
                 self.foodcost = section['fused']
-
-        # Add Formation Rank, for custom pathing on units
-        self.formation = None
-        if 'formation' in section and self.baseclass is not 'npc_dota_building':
-            self.formation = section['formation']
-
-        # Add Build Time
-        self.buildtime = None
-        if 'bldtm' in section:
-            self.buildtime = section['bldtm']
 
         self.bountygoldmin = None
         self.bountygoldmax = None
@@ -204,7 +172,7 @@ class wc3pars:
             self.visionnighttimerange = section['nsight']
 
         self.movementcapabilities = 'DOTA_UNIT_CAP_MOVE_NONE'
-        self.movementspeed = '0'
+        self.movementspeed = '100'
         if 'spd' in section:
             self.movementspeed = section['spd']
             if 'movetp' in section:
@@ -213,20 +181,12 @@ class wc3pars:
         if 'turnRate' in section:
             self.movementturnrate = section['turnRate']
 
-        # Defaults
+        # Defaults, no wc3 equivalent
         self.boundshullname = 'DOTA_HULL_SIZE_HERO'
         self.healthbaroffset = 140
 
-        # Proper collision, to SetHullRadius and adjust bounds later
-        self.collision = None
-        if 'collision' in section:
-            self.collision = section['collision']
-
         self.team = 'DOTA_TEAM_NEUTRALS'
-        if self.baseclass is 'npc_dota_building':
-            self.unitrelationshipclass = 'DOTA_NPC_UNIT_RELATIONSHIP_TYPE_BUILDING'
-        else:
-            self.unitrelationshipclass = 'DOTA_NPC_UNIT_RELATIONSHIP_TYPE_DEFAULT'      
+        self.unitrelationshipclass = 'DOTA_NPC_UNIT_RELATIONSHIP_TYPE_DEFAULT'
 
         self.comments = ''
         
@@ -245,25 +205,21 @@ class wc3pars:
         section = ''
         lines.append('\n')
         lines.append(self.unitcomment(self.npc_name))
-        lines.append(self.kline(self.npc_race+'_'+self.npc_name.replace(' ', '_').lower()))
+        lines.append(self.kline(self.npc_name.replace(' ', '_')))
         lines.append(self.kvcomment(' General'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
-        if self.attributeprimary is not None:
-            self.baseclass = ''
-            lines.append(self.kvline('override_hero', self.baseclass, "Add npc_dota_hero internal name"))
-        else:
-            lines.append(self.kvline('BaseClass', self.baseclass,None))
-            lines.append(self.kvline('Model', '', 'Add model'))
-            lines.append(self.kvline('ModelScale', '1', None))
-            lines.append(self.kvline('Level', self.level, None))
-            lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))
+        lines.append(self.kvline('BaseClass', self.baseclass,None))
+        lines.append(self.kvline('Model', '', 'Add model'))
+        lines.append(self.kvline('ModelScale', '1', None))
+        lines.append(self.kvline('Level', self.level, None))
+        lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
+        lines.append(self.kvline('HealthBarOffset', self.healthbaroffset, None))
 
         lines.append(self.kvcomment(None))
         
         lines.append(self.kvcomment(' Abilities'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
-        if self.abilitycounter <= 4:
-            lines.append(self.kvline('AbilityLayout', '4',None))
+
         if self.abilitylist is not None:
             for abil in self.abilitylist:
                 lines.append(self.kvline('Ability' + str(self.abilitycounter), '', 'Reference: ' + abil))
@@ -283,9 +239,9 @@ class wc3pars:
         lines.append(self.kvcomment(' Attack'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('AttackCapabilities',self.attackcapabilities, None))
-        lines.append(self.kvline('AttackDamageType', self.attackdamagetype, None))
         lines.append(self.kvline('AttackDamageMin', self.attackdamagemin, None))
         lines.append(self.kvline('AttackDamageMax', self.attackdamagemax, None))
+        lines.append(self.kvline('AttackDamageType', self.attackdamagetype, None))
 
         if not self.attackrate.find('-') != -1:
         	lines.append(self.kvline('AttackRate', self.attackrate, None))
@@ -321,77 +277,34 @@ class wc3pars:
         lines.append(self.kvline('BountyGoldMax', self.bountygoldmax, None))
         lines.append(self.kvcomment(None))
 
-        lines.append(self.kvcomment(' Bounds'))
-        lines.append(self.kvcomment('----------------------------------------------------------------'))
-        
-        # Attempt to write the best hull and radius possible
-        if float(self.collision) <= 8: 
-            self.boundshullname = 'DOTA_HULL_SIZE_SMALL'
-            self.ringradius = 40
-        elif float(self.collision) <= 16:
-            self.boundshullname = 'DOTA_HULL_SIZE_REGULAR'
-            self.ringradius = 50
-        elif float(self.collision) <= 24:
-            self.boundshullname = 'DOTA_HULL_SIZE_HERO'
-            self.ringradius = 60
-        # Cut the 24-81 interval in half
-        elif float(self.collision) <= 54:
-            self.boundshullname = 'DOTA_HULL_SIZE_HERO'
-            self.ringradius = 70
-        elif float(self.collision) <= 81:
-            self.boundshullname = 'DOTA_HULL_SIZE_BUILDING'
-            self.ringradius = 140
-        # Cut the 96-144 interval in half
-        elif float(self.collision) <= 120:
-            self.boundshullname = 'DOTA_HULL_SIZE_FILLER'
-            self.ringradius = 190
-        else:
-            self.boundshullname = 'DOTA_HULL_SIZE_BARRACKS'
-            self.ringradius = 220
-
-        lines.append(self.kvline('BoundsHullName', self.boundshullname, None))
-        lines.append(self.kvline('RingRadius', self.ringradius, None))
-        lines.append(self.kvline('CollisionSize', self.collision, None))
-        lines.append(self.kvline('FormationRank', self.formation, None))
-
-        lines.append(self.kvcomment(None))
-
-        lines.append(self.kvcomment(' Building Cost Stats'))
+        lines.append(self.kvcomment(' Gold and Lumber'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('GoldCost', self.goldcost, None))
-        lines.append(self.kvline('LumberCost', self.lumbercost, None))
-        if self.baseclass is not 'npc_dota_building':
-            lines.append(self.kvline('FoodCost', self.foodcost, None))
-        lines.append(self.kvline('BuildTime', self.buildtime, None))
-
+        lines.append(self.kvline('LumberCost', self.goldcost, None))
         lines.append(self.kvcomment(None))
 
         lines.append(self.kvcomment(' Movement'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('MovementCapabilities', self.movementcapabilities, None))
-        if self.movementspeed is not '-':
+        if self.movementspeed is not '-' and self.movementturnrate is not '-':
 	        lines.append(self.kvline('MovementSpeed', self.movementspeed, None))
-        else:
-            lines.append(self.kvline('MovementSpeed', '0', None))
-        if self.movementturnrate is not '-':
 	        lines.append(self.kvline('MovementTurnRate', self.movementturnrate, None))
         lines.append(self.kvcomment(None))
 
         lines.append(self.kvcomment(' Status'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('StatusHealth', self.statushealth, None))
-        lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, None))
+        if not self.statushealth.find('-') != -1:
+            lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, None))
+        else:
+            lines.append(self.kvline('StatusHealthRegen', self.statushealthregen, "Negative regen doesnt decrease HP ingame"))
 
 		# Careful with negative mana regen 
         if not self.statusmana.find('-') != -1:
-            lines.append(self.kvline('StatusMana', self.statusmana, None))
-        else:
-           lines.append(self.kvline('StatusMana', '0', None)) 
+        	lines.append(self.kvline('StatusMana', self.statusmana, None))
 
         if not self.statusmanaregen.find('-') != -1:
-            lines.append(self.kvline('StatusManaRegen', self.statusmana, None))
-        else:
-           lines.append(self.kvline('StatusManaRegen', '0', None))
+        	lines.append(self.kvline('StatsManaRegen', self.statusmanaregen, None))
 
         lines.append(self.kvcomment(None))
 
@@ -422,44 +335,14 @@ class wc3pars:
         lines.append(self.kvline('UnitRelationShipClass', self.unitrelationshipclass, None))
         lines.append(self.kvcomment(None))
     
-        if self.baseclass is 'npc_dota_creature' and self.attributeprimary is None:
-            lines.append(self.kvcomment(' Creature Data'))
-            lines.append(self.kvcomment('----------------------------------------------------------------'))
-            lines.append(self.kvblock('Creature'))
-            lines.append(self.kvline2('DisableClumpingBehavior', '1', None))
-            lines.append('\n\t}\n')
+        lines.append(self.kvcomment(' Creature Data'))
+        lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(endline)
         for line in lines:
             section += line
         newfile.write(section)
 
     def kvline(self, key, val, comment):
-        line = ''
-        if val is not None:
-            key = str(key)
-            val = str(val)
-            line = '\t"' + key + '"\t'
-            # At least 1 tab, desired is align to the equivalent of 5 tabs
-            # Need to account for the extra 2 "" characters
-            if len(key) < 2:
-                line += '\t'
-            if len(key) < 6:
-                line += '\t'
-            if len(key) < 10:
-                line += '\t'
-            if len(key) < 14:
-                line += '\t'
-            if len(key) < 18:
-                line += '\t'
-            if len(key) < 22:
-                line += '\t'
-            line += '"' + val +'"'
-            if comment is not None:
-                line += '\t //' + comment
-            line += '\n'
-        return line
-
-    def kvline2(self, key, val, comment):
         line = ''
         if val is not None:
             key = str(key)
@@ -482,37 +365,26 @@ class wc3pars:
             line += '"' + val +'"'
             if comment is not None:
                 line += '\t //' + comment
-            #line += '\n'
+            line += '\n'
         return line
 
     def kvcomment(self, comment):
-        line =  '\t'
+        line =  '\t\t'
         if comment is not None:
             line += '//' + comment
         line += '\n'
         return line
 
     def unitcomment(self, comment):
-        line = '//=================================================================================\n'
-        if self.attributeprimary is not None:
-            line += '// Hero: ' + comment +'\n'
-        elif self.baseclass is 'npc_dota_creature':
-            line += '// Creature: ' + comment +'\n'
-        elif self.baseclass is 'npc_dota_building':
-            line += '// Building: ' + comment +'\n'
-            
+        line = '\t//=================================================================================\n'
+        line += '\t// Creature: ' + comment +'\n'
         if self.description is not None:
-            line += '// Description: ' + self.description + '\n'
-        line += '//=================================================================================\n'
+            line += '\t// Description: ' + self.description + '\n'
+        line += '\t//=================================================================================\n'
         return line
 
     def kline(self, unit_name):
-        line = '"'+ unit_name +'"\n' + '{\n'
-        return line
-
-    # 2nd level
-    def kvblock(self, block_name):
-        line = '\t"'+ block_name +'"\n' + '\t{\n'
+        line = '\t"'+ unit_name +'"\n' + '\t{\n'
         return line
         
 
