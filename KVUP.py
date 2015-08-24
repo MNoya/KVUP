@@ -27,6 +27,7 @@ attacktypes['chaos'] = 'DOTA_COMBAT_CLASS_ATTACK_LIGHT'
 attacktypes['hero'] = 'DOTA_COMBAT_CLASS_ATTACK_HERO'
 attacktypes['magic'] = 'MAGIC' # Needs custom mechanic
 attacktypes['spells'] = 'SPELLS' # Needs custom mechanic
+attacktypes['unknown'] = 'U W0T M8'
 
 #Movement Types: - ""
 #--------------
@@ -50,7 +51,12 @@ class wc3pars:
     def __init__(self, section):
         self.npc_name = ''
         if 'Name' in section:
-            self.npc_name = section['Name']
+            self.name = section['Name']
+        else:
+            self.name = "ERROR, NO 'Name'"
+
+        if 'race' in section:
+            self.race = section['race']
         
         # BaseClass
         self.baseclass = 'npc_dota_creature'
@@ -87,7 +93,7 @@ class wc3pars:
             if section['dice1'] is not '-' and section['sides1'] is not '-':
                 self.attackdamagemin = str(float(section['dice1']) + float(section['dmgplus1']))
                 self.attackdamagemax = str(float(section['dice1']) * float(section['sides1']) + float(section['dmgplus1']))
-        self.attackdamagetype = 'DAMAGE_TYPE_PHYSICAL'
+        self.attackdamagetype = 'DAMAGE_TYPE_ArmorPhysical'
         self.attackrate = None
         if 'cool1' in section:
             self.attackrate = section['cool1']
@@ -164,6 +170,10 @@ class wc3pars:
         if 'regenMana' in section:
             if section['regenMana'] is not ' - ' and section['regenMana'] is not '-':
                 self.statusmanaregen = section['regenMana']
+        self.statusstartingmana = '0'
+        if 'mana0' in section:
+            if section['mana0'] is not ' - ' and section['mana0'] is not '-':
+                self.statusstartingmana = section['mana0']
         self.visiondaytimerange = 10
         if 'sight' in section:
             self.visiondaytimerange = section['sight']
@@ -195,7 +205,7 @@ class wc3pars:
             self.description = section['Ubertip']
 
     def check(self):
-        print(self.npc_name)
+        print(self.name)
         print(self.statushealthregen)
         print(self.statusmanaregen)
 
@@ -204,8 +214,9 @@ class wc3pars:
         lines = []
         section = ''
         lines.append('\n')
-        lines.append(self.unitcomment(self.npc_name))
-        lines.append(self.kline(self.npc_name.replace(' ', '_')))
+        if self.name is not None:
+            lines.append(self.unitcomment(self.name))
+            lines.append(self.kline(self.name.replace(' ', '_').lower()))
         lines.append(self.kvcomment(' General'))
         lines.append(self.kvcomment('----------------------------------------------------------------'))
         lines.append(self.kvline('BaseClass', self.baseclass,None))
@@ -304,7 +315,10 @@ class wc3pars:
         	lines.append(self.kvline('StatusMana', self.statusmana, None))
 
         if not self.statusmanaregen.find('-') != -1:
-        	lines.append(self.kvline('StatsManaRegen', self.statusmanaregen, None))
+        	lines.append(self.kvline('StatusManaRegen', self.statusmanaregen, None))
+
+        if not self.statusstartingmana.find('-') != -1:
+            lines.append(self.kvline('StatusStartingMana', self.statusstartingmana, None))
 
         lines.append(self.kvcomment(None))
 
